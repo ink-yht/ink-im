@@ -1,0 +1,4 @@
+MySQL:
+  dsn: "root:root@tcp(localhost:3306)/im?charset=utf8mb4&parseTime=True&loc=Local"
+Redis:
+  Addr: "127.0.0.1:6380"
