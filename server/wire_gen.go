@@ -22,12 +22,13 @@ import (
 // Injectors from wire.go:
 
 func InitWebServer() *gin.Engine {
-	v := ioc.InitMiddleWares()
-	db := ioc.InitDB()
+	logger := ioc.InitLogger()
+	v := ioc.InitMiddleWares(logger)
+	db := ioc.InitDB(logger)
 	userDao := dao.NewUserDAO(db)
 	userRepository := user_repo.NewUserRepository(userDao)
-	userService := user_service.NewUserService(userRepository)
-	userHandler := user_web.NewUserHandler(userService)
+	userService := user_service.NewUserService(userRepository, logger)
+	userHandler := user_web.NewUserHandler(userService, logger)
 	engine := ioc.InitWebServer(v, userHandler)
 	return engine
 }

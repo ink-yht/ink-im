@@ -4,6 +4,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"ink-im-server/internal/web/user_web"
+	"ink-im-server/pkg/logger"
 	"strings"
 	"time"
 )
@@ -15,10 +16,13 @@ func InitWebServer(mdls []gin.HandlerFunc, userHdl *user_web.UserHandler) *gin.E
 	return server
 }
 
-func InitMiddleWares() []gin.HandlerFunc {
+func InitMiddleWares(l logger.Logger) []gin.HandlerFunc {
 	return []gin.HandlerFunc{
 
 		corsHdl(),
+		//log.NewMiddlewaresLoggerBuilder(func(ctx context.Context, al *log.AccessLog) {
+		//	l.Debug("HTTP请求", logger.Field{Key: "al", Value: al})
+		//}).AllowReqBody().AllowRespBody().Build(),
 
 		//middlelware.NewLoginJWTMiddlewareBuilder().
 		//	IgnorePaths("/users/signup").
