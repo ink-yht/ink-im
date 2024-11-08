@@ -8,10 +8,14 @@ import (
 	"time"
 )
 
-var ErrDuplicate = dao.ErrDuplicate
+var (
+	ErrDuplicate      = dao.ErrDuplicate
+	ErrRecordNotFound = dao.ErrRecordNotFound
+)
 
 type UserRepository interface {
 	Create(ctx context.Context, user domain.User) error
+	FindByEmail(ctx context.Context, email string) (domain.User, error)
 }
 
 type CacheUserRepository struct {
@@ -22,6 +26,14 @@ func NewUserRepository(dao dao.UserDao) UserRepository {
 	return &CacheUserRepository{
 		dao: dao,
 	}
+}
+
+func (repo *CacheUserRepository) FindByEmail(ctx context.Context, email string) (domain.User, error) {
+	user, err := repo.dao.FindByEmail(ctx, email)
+	if err != nil {
+		return domain.User{}, err
+	}
+	return repo.entityToDomain(user), err
 }
 
 func (repo *CacheUserRepository) Create(ctx context.Context, user domain.User) error {
