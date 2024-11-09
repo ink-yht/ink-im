@@ -21,6 +21,7 @@ func InitMiddleWares(l logger.Logger) []gin.HandlerFunc {
 	return []gin.HandlerFunc{
 
 		corsHdl(),
+
 		//log.NewMiddlewaresLoggerBuilder(func(ctx context.Context, al *log.AccessLog) {
 		//	l.Debug("HTTP请求", logger.Field{Key: "al", Value: al})
 		//}).AllowReqBody().AllowRespBody().Build(),

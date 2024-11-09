@@ -41,10 +41,10 @@ func NewUserHandler(svc user_service.UserService, l logger.Logger) *UserHandler 
 
 func (u *UserHandler) UserRegisterRouters(server *gin.Engine) {
 	ug := server.Group("/users")
-	ug.POST("signup", u.Signup)
-	ug.POST("login", u.Login)
-	ug.POST("edit", u.Edit)
-	ug.GET("/profile", u.Profile)
+	ug.POST("/signup", u.Signup)
+	ug.POST("/login", u.Login)
+	ug.POST("/edit", u.Edit)
+	ug.GET("/info", u.Info)
 }
 
 func (u *UserHandler) Signup(ctx *gin.Context) {
@@ -262,7 +262,7 @@ func (u *UserHandler) Edit(ctx *gin.Context) {
 
 }
 
-func (u *UserHandler) Profile(ctx *gin.Context) {
+func (u *UserHandler) Info(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, web.Result{
 		Code: 0,
 		Msg:  "欢迎来到主页",

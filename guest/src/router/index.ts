@@ -1,19 +1,28 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory } from "vue-router";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    // login
     {
       path: "/login",
       name: "login",
-      component: () => import("@/views/login/index.vue")
+      component: () => import("@/views/login/login.vue"),
     },
+
+    // signup
+    {
+      path: "/signup",
+      name: "signup",
+      component: () => import("@/views/login/signup.vue"),
+    },
+
+    // web
     {
       path: "/",
       name: "web",
       component: () => import("@/views/web/index.vue"),
       children: [
-        
         // contacts
         {
           path: "",
@@ -29,33 +38,33 @@ const router = createRouter({
               path: "welcome",
               name: "welcome",
               component: () => import("@/views/web/contacts/welcome.vue"),
-            }
-          ]
+            },
+          ],
         },
 
         // session
         {
           path: "session",
           name: "session",
-          component: ()=>import("@/views/web/session/index.vue")
+          component: () => import("@/views/web/session/index.vue"),
         },
 
         // info
         {
           path: "info",
           name: "info",
-          component: ()=>import("@/views/web/info/index.vue")
+          component: () => import("@/views/web/info/index.vue"),
         },
 
         // notice
         {
           path: "notice",
           name: "notice",
-          component: ()=>import("@/views/web/notice/index.vue")
-        }
-      ]
-    }
-  ]
-})
+          component: () => import("@/views/web/notice/index.vue"),
+        },
+      ],
+    },
+  ],
+});
 
-export default router
+export default router;
