@@ -1,16 +1,17 @@
 package user_web
 
 import (
-	regexp "github.com/dlclark/regexp2"
-	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
-	"ink-im-server/internal/domain/commit"
+	"fmt"
 	"ink-im-server/internal/domain/user_domain"
 	"ink-im-server/internal/service/user_service"
 	"ink-im-server/internal/web"
 	"ink-im-server/pkg/logger"
 	"net/http"
 	"time"
+
+	regexp "github.com/dlclark/regexp2"
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 const (
@@ -62,14 +63,20 @@ func (u *UserHandler) Signup(ctx *gin.Context) {
 		Role            int8   `json:"role"`   // 角色 1 管理员 2 普通用户
 		OpenID          string `json:"OpenID"` // 第三方平台登录的凭证
 		UserConf        struct {
-			RecallMessage        *string     `json:"recallMessage"`        // 撤回消息的提示内容
-			FriendOnline         bool        `json:"friendOnline"`         // 好友上线提醒
-			SecureLink           bool        `json:"secureLink"`           // 安全链接
-			SavePwd              bool        `json:"savePwd"`              // 保存密码
-			SearchUser           int8        `json:"searchUser"`           // 别人查找到你的方式
-			Verification         int8        `json:"verification"`         // 好友验证方式
-			VerificationQuestion *commit.VFQ `json:"verificationQuestion"` // 验证问题  为3和4的时候需要
-			Online               bool        `json:"online"`               // 是否在线
+			RecallMessage *string `json:"recallMessage"` // 撤回消息的提示内容
+			FriendOnline  bool    `json:"friendOnline"`  // 好友上线提醒
+			SecureLink    bool    `json:"secureLink"`    // 安全链接
+			SavePwd       bool    `json:"savePwd"`       // 保存密码
+			SearchUser    int8    `json:"searchUser"`    // 别人查找到你的方式
+			Verification  int8    `json:"verification"`  // 好友验证方式
+			// 验证问题  为3和4的时候需要
+			Problem1 string `json:"problem1"`
+			Problem2 string `json:"problem2"`
+			Problem3 string `json:"problem3"`
+			Answer1  string `json:"answer1"`
+			Answer2  string `json:"answer2"`
+			Answer3  string `json:"answer3"`
+			Online   bool   `json:"online"` // 是否在线
 		} `json:"userConf"`
 	}
 
@@ -142,15 +149,20 @@ func (u *UserHandler) Signup(ctx *gin.Context) {
 		Role:     req.Role,
 		OpenID:   req.OpenID,
 		UserConf: &user_domain.UserConf{
-			RecallMessage:        nil,
-			FriendOnline:         false,
-			Sound:                true,
-			SecureLink:           false,
-			SavePwd:              false,
-			SearchUser:           2,
-			Verification:         2,
-			VerificationQuestion: nil,
-			Online:               true,
+			RecallMessage: nil,
+			FriendOnline:  false,
+			Sound:         true,
+			SecureLink:    false,
+			SavePwd:       false,
+			SearchUser:    2,
+			Verification:  2,
+			Problem1:      "",
+			Problem2:      "",
+			Problem3:      "",
+			Answer1:       "",
+			Answer2:       "",
+			Answer3:       "",
+			Online:        true,
 		},
 	}
 
@@ -286,6 +298,84 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 
 func (u *UserHandler) Edit(ctx *gin.Context) {
 
+	type Req struct {
+		Email         string  `json:"email"`
+		Phone         string  `json:"phone"`
+		Nickname      string  `json:"nickname"`
+		Abstract      string  `json:"abstract"`
+		Avatar        string  `json:"avatar"`
+		RecallMessage *string `json:"recallMessage"`
+		FriendOnline  bool    `json:"friendOnline"`
+		Sound         bool    `json:"sound"`
+		SecureLink    bool    `json:"secureLink"`
+		SavePwd       bool    `json:"savePwd"`
+		SearchUser    int8    `json:"searchUser"`
+		Verification  int8    `json:"verification"`
+		Problem1      string  `json:"problem1"`
+		Problem2      string  `json:"problem2"`
+		Problem3      string  `json:"problem3"`
+		Answer1       string  `json:"answer1"`
+		Answer2       string  `json:"answer2"`
+		Answer3       string  `json:"answer3"`
+	}
+
+	var req Req
+	if err := ctx.Bind(&req); err != nil {
+		return
+	}
+
+	if req.Nickname == "" {
+		ctx.JSON(http.StatusOK, web.Result{Code: 1, Msg: "昵称不能为空"})
+		return
+	}
+
+	if len(req.Abstract) > 128 {
+		ctx.JSON(http.StatusOK, web.Result{Code: 1, Msg: "简介过长"})
+		return
+	}
+
+	userClaims := ctx.MustGet("claims").(UserClaims)
+
+	data := user_domain.User{
+		Id:       userClaims.Uid,
+		Email:    req.Email,
+		Phone:    req.Phone,
+		Nickname: req.Nickname,
+		Abstract: req.Abstract,
+		Avatar:   req.Avatar,
+		UserConf: &user_domain.UserConf{
+			RecallMessage: req.RecallMessage,
+			FriendOnline:  req.FriendOnline,
+			Sound:         req.Sound,
+			SecureLink:    req.SecureLink,
+			SavePwd:       req.SavePwd,
+			SearchUser:    req.SearchUser,
+			Verification:  req.Verification,
+			Problem1:      req.Problem1,
+			Problem2:      req.Problem2,
+			Problem3:      req.Problem3,
+			Answer1:       req.Answer1,
+			Answer2:       req.Answer2,
+			Answer3:       req.Answer3,
+		},
+	}
+	fmt.Println("data:", data)
+	user, err := u.svc.Edit(ctx, data)
+	if err != nil {
+		u.l.Error("修改个人信息失败", logger.String("email", req.Email))
+		ctx.JSON(http.StatusOK, web.Result{
+			Code: 1,
+			Msg:  "修改个人信息失败",
+			Data: nil,
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, web.Result{
+		Code: 0,
+		Msg:  "个人信息修改成功",
+		Data: user,
+	})
+
 }
 
 func (u *UserHandler) Info(ctx *gin.Context) {
@@ -299,25 +389,7 @@ func (u *UserHandler) Info(ctx *gin.Context) {
 		return
 	}
 
-	type Resp struct {
-		Id                   uint       `json:"id"`
-		Email                string     `json:"email"`
-		Phone                string     `json:"phone"`
-		Nickname             string     `json:"nickname"`
-		Abstract             string     `json:"abstract"`
-		Avatar               string     `json:"avatar"`
-		RecallMessage        *string    `json:"recallMessage"`
-		FriendOnline         bool       `json:"friendOnline"`
-		Sound                bool       `json:"sound"`
-		SecureLink           bool       `json:"secureLink"`
-		SavePwd              bool       `json:"savePwd"`
-		SearchUser           int8       `json:"searchUser"`
-		Verification         int8       `json:"verification"`
-		VerificationQuestion commit.VFQ `json:"verificationQuestion"`
-		Online               bool       `json:"online"`
-	}
-
-	data := Resp{
+	data := user_domain.Resp{
 		Id:            user.Id,
 		Email:         user.Email,
 		Phone:         user.Phone,
@@ -331,12 +403,13 @@ func (u *UserHandler) Info(ctx *gin.Context) {
 		SavePwd:       user.UserConf.SavePwd,
 		SearchUser:    user.UserConf.SearchUser,
 		Verification:  user.UserConf.Verification,
+		Problem1:      user.UserConf.Problem1,
+		Problem2:      user.UserConf.Problem2,
+		Problem3:      user.UserConf.Problem3,
+		Answer1:       user.UserConf.Answer1,
+		Answer2:       user.UserConf.Answer2,
+		Answer3:       user.UserConf.Answer3,
 		Online:        user.UserConf.Online,
-	}
-
-	// 检查 VerificationQuestion 是否为空
-	if user.UserConf.VerificationQuestion != nil {
-		data.VerificationQuestion = *user.UserConf.VerificationQuestion
 	}
 
 	ctx.JSON(http.StatusOK, web.Result{

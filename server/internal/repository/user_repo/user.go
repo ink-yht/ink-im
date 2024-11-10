@@ -17,6 +17,7 @@ type UserRepository interface {
 	Create(ctx context.Context, user user_domain.User) error
 	FindByEmail(ctx context.Context, email string) (user_domain.User, error)
 	FindById(ctx context.Context, uid uint) (user_domain.User, error)
+	UpdateInfo(ctx context.Context, user user_domain.User) (user_domain.User, error)
 }
 
 type CacheUserRepository struct {
@@ -27,6 +28,11 @@ func NewUserRepository(dao user_dao.UserDao) UserRepository {
 	return &CacheUserRepository{
 		dao: dao,
 	}
+}
+
+func (repo *CacheUserRepository) UpdateInfo(ctx context.Context, user user_domain.User) (user_domain.User, error) {
+	u, err := repo.dao.UpdateNonZeroFields(ctx, repo.domainToEntity(user))
+	return repo.entityToDomain(u), err
 }
 
 func (repo *CacheUserRepository) FindById(ctx context.Context, uid uint) (user_domain.User, error) {
@@ -82,16 +88,14 @@ func (repo *CacheUserRepository) domainToEntity(u user_domain.User) user_dao.Use
 			SavePwd:       u.UserConf.SavePwd,
 			SearchUser:    u.UserConf.SearchUser,
 			Verification:  u.UserConf.Verification,
+			Problem1:      u.UserConf.Problem1,
+			Problem2:      u.UserConf.Problem2,
+			Problem3:      u.UserConf.Problem3,
+			Answer1:       u.UserConf.Answer1,
+			Answer2:       u.UserConf.Answer2,
+			Answer3:       u.UserConf.Answer3,
 			Online:        u.UserConf.Online,
 		},
-	}
-	if u.UserConf.VerificationQuestion != nil {
-		data.UserConfModel.VerificationQuestion.Problem1 = u.UserConf.VerificationQuestion.Problem1
-		data.UserConfModel.VerificationQuestion.Problem2 = u.UserConf.VerificationQuestion.Problem2
-		data.UserConfModel.VerificationQuestion.Problem3 = u.UserConf.VerificationQuestion.Problem3
-		data.UserConfModel.VerificationQuestion.Answer1 = u.UserConf.VerificationQuestion.Answer1
-		data.UserConfModel.VerificationQuestion.Answer2 = u.UserConf.VerificationQuestion.Answer2
-		data.UserConfModel.VerificationQuestion.Answer3 = u.UserConf.VerificationQuestion.Answer3
 	}
 	return data
 }
@@ -121,17 +125,15 @@ func (repo *CacheUserRepository) entityToDomain(u user_dao.UserModel) user_domai
 			SavePwd:       u.UserConfModel.SavePwd,
 			SearchUser:    u.UserConfModel.SearchUser,
 			Verification:  u.UserConfModel.Verification,
+			Problem1:      u.UserConfModel.Problem1,
+			Problem2:      u.UserConfModel.Problem2,
+			Problem3:      u.UserConfModel.Problem3,
+			Answer1:       u.UserConfModel.Answer1,
+			Answer2:       u.UserConfModel.Answer2,
+			Answer3:       u.UserConfModel.Answer3,
 			Online:        u.UserConfModel.Online,
 		},
 	}
 
-	if u.UserConfModel.VerificationQuestion != nil {
-		data.UserConf.VerificationQuestion.Problem1 = u.UserConfModel.VerificationQuestion.Problem1
-		data.UserConf.VerificationQuestion.Problem2 = u.UserConfModel.VerificationQuestion.Problem2
-		data.UserConf.VerificationQuestion.Problem3 = u.UserConfModel.VerificationQuestion.Problem3
-		data.UserConf.VerificationQuestion.Answer1 = u.UserConfModel.VerificationQuestion.Answer1
-		data.UserConf.VerificationQuestion.Answer2 = u.UserConfModel.VerificationQuestion.Answer2
-		data.UserConf.VerificationQuestion.Answer3 = u.UserConfModel.VerificationQuestion.Answer3
-	}
 	return data
 }
