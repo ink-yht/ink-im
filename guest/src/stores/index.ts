@@ -1,63 +1,80 @@
 import { defineStore } from "pinia";
 import { parseToken } from "@/utils/parseToken";
+import { UserInfoApi } from "@/api/user";
+import { ElMessage } from "element-plus";
 
-interface UserInfoType {
+interface userInfoType {
   exp: number;
   Uid: number;
   token: string;
   avatar: string;
 }
 
-const initialUserInfo: UserInfoType = {
+const userInfo: userInfoType = {
   exp: 0,
   Uid: 0,
   token: "",
   avatar: "",
 };
 
-export const useStore = defineStore("mainStore", {
-  state: () => ({
-    UserInfo: { ...initialUserInfo }, // 使用扩展运算符复制初始状态
-  }),
+export const useStore = defineStore("counter", {
+  state: () => {
+    return {
+      userInfo: userInfo,
+    };
+  },
 
   actions: {
     async setToken(token: string) {
       try {
-        const payload = parseToken(token) as Partial<UserInfoType>; // 确保 parseToken 返回的是 Partial<UserInfoType>
-
-        if (payload.exp !== undefined) this.UserInfo.exp = payload.exp;
-        if (payload.Uid !== undefined) this.UserInfo.Uid = payload.Uid;
-        this.UserInfo.token = token;
-
-        // 去拿用户的基本信息
-        let res = await this.saveToken();
-      } catch (error) {
-        console.error("Failed to set token:", error);
-      }
-    },
-
-    saveToken() {
-      try {
-        localStorage.setItem("UserInfo", JSON.stringify(this.UserInfo));
-      } catch (error) {
-        console.error("Failed to save token:", error);
-      }
-    },
-
-    loadToken() {
-      try {
-        const val = localStorage.getItem("UserInfo");
-        if (!val) {
-          // 没有登录，或者登录失效
+        const payload = parseToken(token);
+        console.log(payload);
+        this.userInfo.token = token;
+        this.userInfo.exp = payload.exp;
+        this.userInfo.Uid = payload.Uid;
+        // 去拿用户的信息
+        let res = await UserInfoApi();
+        if (res.code) {
+          ElMessage.error(res.msg);
           return;
         }
-        this.userInfo = JSON.parse(val);
+        this.userInfo.avatar = res.data.avatar;
+        // 持久化存储
+        this.saveToken();
+      } catch (e) {
+        console.log(e);
+      }
+    },
+    saveToken() {
+      try {
+        localStorage.setItem("UserInfo", JSON.stringify(this.userInfo));
       } catch (error) {
+        console.error(error);
+      }
+    },
+    loadToken() {
+      const val = localStorage.getItem("UserInfo");
+      if (!val) {
+        // 没有登录，或者登录失效
+        return;
+      }
+      try {
+        this.userInfo = JSON.parse(val);
+      } catch (e) {
         localStorage.removeItem("UserInfo");
-        console.error("Failed to load token:", error);
+        return;
       }
     },
   },
 
-  getters: {},
+  getters: {
+    isLogin(): boolean {
+      try {
+        console.log(this.userInfo.token);
+        return this.userInfo.token != "";
+      } catch (e) {
+        console.log(e);
+      }
+    },
+  },
 });

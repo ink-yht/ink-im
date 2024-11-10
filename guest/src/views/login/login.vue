@@ -5,10 +5,12 @@ import { Hide, View, Message, Lock } from "@element-plus/icons-vue";
 import Qq_color from "@/components/im_login/qq_color.vue";
 import { ElMessage } from "element-plus";
 import { LoginApi, type LoginRequest } from "@/api/user";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 
 const router = useRouter();
+const route = useRoute();
 
+// 表单校验
 const rules = reactive({
   email: [{ required: true, message: "Please input email", trigger: "blur" }],
   password: [
@@ -17,6 +19,7 @@ const rules = reactive({
   ],
 });
 
+// 定义表单字段
 const form = reactive<LoginRequest>({
   email: "",
   password: "",
@@ -37,10 +40,12 @@ watch(
   },
 );
 
+// 小眼睛查看密码
 const togglePasswordVisibility = () => {
   form.showPassword = !form.showPassword;
 };
 
+// 记住密码
 const checkRememberMe = () => {
   if (form.email) {
     const rememberMe =
@@ -68,6 +73,7 @@ const checkRememberMe = () => {
   }
 };
 
+// 表单登录
 const handleLogin = async () => {
   if (form.email && form.password) {
     // 实现记住密码
@@ -93,7 +99,6 @@ const handleLogin = async () => {
 
     // 向后端发起请求
     let res = await LoginApi(form);
-
     // code 不为 0
     if (res.code) {
       ElMessage.error(res.msg);
@@ -101,6 +106,15 @@ const handleLogin = async () => {
     }
     ElMessage.success(res.msg);
 
+    // 先拿 redirect_url,如果有，就跳转到这里
+    const redirectUrl = router.currentRoute.value.query.redirect_url;
+    console.log("redirectUrl", redirectUrl);
+    if (redirectUrl) {
+      await router.push({
+        path: redirectUrl as string,
+      });
+      return;
+    }
     await router.push({
       name: "web",
     });

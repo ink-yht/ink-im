@@ -5,7 +5,7 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
-	"ink-im-server/internal/repository/dao"
+	"ink-im-server/internal/repository/dao/user_dao"
 	"ink-im-server/internal/repository/user_repo"
 	"ink-im-server/internal/service/user_service"
 	"ink-im-server/internal/web/user_web"
@@ -18,7 +18,7 @@ func InitWebServer() *gin.Engine {
 		ioc.InitDB, ioc.InitLogger,
 
 		// DAO 部分
-		dao.NewUserDAO,
+		user_dao.NewUserDAO,
 
 		// cache 部分
 

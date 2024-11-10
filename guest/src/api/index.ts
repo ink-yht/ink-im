@@ -1,9 +1,6 @@
 import axios from "axios";
 import { ElMessage } from "element-plus";
-import { parseToken } from "@/utils/parseToken";
 import { useStore } from "@/stores";
-
-const store = useStore();
 
 export const useAxios = axios.create({
   baseURL: "http://127.0.0.1:8081",
@@ -20,8 +17,10 @@ export interface listDataType<T> {
 }
 
 useAxios.interceptors.request.use((config) => {
-  // const store = useStore();
-  // config.headers["token"] = store.userInfo.token;
+  const store = useStore();
+  const token = store.userInfo.token;
+  console.log(token);
+  config.headers.setAuthorization("Bearer " + token, true);
   return config;
 });
 useAxios.interceptors.response.use(
@@ -32,7 +31,7 @@ useAxios.interceptors.response.use(
       ElMessage.error(response.statusText);
       return Promise.reject(response.statusText);
     }
-
+    const store = useStore();
     // 获取 token
     const newToken = response.headers["x-jwt-token"];
     store.setToken(newToken);

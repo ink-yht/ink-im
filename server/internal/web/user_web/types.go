@@ -2,6 +2,6 @@ package user_web
 
 import "github.com/gin-gonic/gin"
 
-type handler interface {
+type Handler interface {
 	UserRegisterRouters(server *gin.Engine)
 }

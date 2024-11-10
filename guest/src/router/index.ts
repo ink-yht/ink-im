@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { useStore } from "@/stores";
+import { ElMessage } from "element-plus";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -63,8 +65,35 @@ const router = createRouter({
           component: () => import("@/views/web/notice/index.vue"),
         },
       ],
+      meta: {
+        isLogin: true, // 需要登陆验证
+      },
     },
   ],
+});
+
+router.beforeEach((to, from, next) => {
+  console.log("to:", to);
+  console.log("from:", from);
+
+  if (to.meta.isLogin === true) {
+    // 查询有没有登录
+    const store = useStore();
+    if (!store.isLogin) {
+      // 没有登录，跳转到登录页面
+      const redirectPath = from.path !== "/" ? from.path : to.path;
+      router.push({
+        name: "login",
+        query: {
+          redirect_url: redirectPath,
+        },
+      });
+      console.log("from.path", from.path);
+      ElMessage.warning("请登录");
+      return;
+    }
+  }
+  next();
 });
 
 export default router;

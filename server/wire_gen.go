@@ -8,7 +8,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"ink-im-server/internal/repository/dao"
+	"ink-im-server/internal/repository/dao/user_dao"
 	"ink-im-server/internal/repository/user_repo"
 	"ink-im-server/internal/service/user_service"
 	"ink-im-server/internal/web/user_web"
@@ -25,7 +25,7 @@ func InitWebServer() *gin.Engine {
 	logger := ioc.InitLogger()
 	v := ioc.InitMiddleWares(logger)
 	db := ioc.InitDB(logger)
-	userDao := dao.NewUserDAO(db)
+	userDao := user_dao.NewUserDAO(db)
 	userRepository := user_repo.NewUserRepository(userDao)
 	userService := user_service.NewUserService(userRepository, logger)
 	userHandler := user_web.NewUserHandler(userService, logger)

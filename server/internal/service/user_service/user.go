@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"golang.org/x/crypto/bcrypt"
-	"ink-im-server/internal/domain"
+	"ink-im-server/internal/domain/user_domain"
 	"ink-im-server/internal/repository/user_repo"
 	"ink-im-server/pkg/logger"
 )
@@ -15,8 +15,9 @@ var (
 )
 
 type UserService interface {
-	SignUp(ctx context.Context, user domain.User) error
-	Login(ctx context.Context, email string, password string) (domain.User, error)
+	SignUp(ctx context.Context, user user_domain.User) error
+	Login(ctx context.Context, email string, password string) (user_domain.User, error)
+	Info(ctx context.Context, uid uint) (user_domain.User, error)
 }
 
 type userService struct {
@@ -31,29 +32,33 @@ func NewUserService(repo user_repo.UserRepository, l logger.Logger) UserService 
 	}
 }
 
-func (svc *userService) Login(ctx context.Context, email string, password string) (domain.User, error) {
+func (svc *userService) Info(ctx context.Context, uid uint) (user_domain.User, error) {
+	return svc.repo.FindById(ctx, uid)
+}
+
+func (svc *userService) Login(ctx context.Context, email string, password string) (user_domain.User, error) {
 	user, err := svc.repo.FindByEmail(ctx, email)
 	// err 两种情况
 	// 1.系统错误
 	// 2.用户没找到
 
 	if err == user_repo.ErrRecordNotFound {
-		return domain.User{}, ErrInvalidUserOrPassword
+		return user_domain.User{}, ErrInvalidUserOrPassword
 	}
 
 	if err != nil {
-		return domain.User{}, err
+		return user_domain.User{}, err
 	}
 
 	// 密码校验
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		return domain.User{}, ErrInvalidUserOrPassword
+		return user_domain.User{}, ErrInvalidUserOrPassword
 	}
 	return user, nil
 }
 
-func (svc *userService) SignUp(ctx context.Context, user domain.User) error {
+func (svc *userService) SignUp(ctx context.Context, user user_domain.User) error {
 	// 加密，然后存起来
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
