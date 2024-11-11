@@ -15,29 +15,27 @@ var (
 )
 
 type UserModel struct {
-	Id         uint `gorm:"primaryKey,autoIncrement"`
-	CreateTime int64
-	UpdateTime int64
-	Email      sql.NullString `gorm:"unique" json:"email"`
-	Password   string         `gorm:"size:128" json:"password"`
-	// 唯一索引冲突 改成 sql.NullString
-	// 唯一索引允许有多个空值，但不能有多个 ""
-	Phone         sql.NullString `gorm:"unique"`
+	ID            uint           `gorm:"primaryKey;autoIncrement" json:"id"`
+	CreateTime    int64          `json:"createTime"`
+	UpdateTime    int64          `json:"updateTime"`
+	Email         sql.NullString `gorm:"unique" json:"email"`
+	Password      string         `gorm:"size:128" json:"password"`
+	Phone         sql.NullString `gorm:"unique" json:"phone"`
 	Nickname      string         `gorm:"size:32" json:"nickname"`
-	Abstract      string         `gorm:"size:128" json:"abstract"` //	 简介
+	Abstract      string         `gorm:"size:128" json:"abstract"`
 	Avatar        string         `gorm:"size:256" json:"avatar"`
 	IP            string         `gorm:"size:32" json:"ip"`
 	Addr          string         `gorm:"size:64" json:"addr"`
-	Role          int8           `gorm:"size:8" json:"role"`     // 角色 1 管理员 2 普通用户
-	OpenID        string         `gorm:"size:128" json:"OpenID"` // 第三方平台登录的凭证
-	UserConfModel *UserConfModel `gorm:"foreignKey:UserID" json:"UserConfModel"`
+	Role          int8           `gorm:"size:8" json:"role"`
+	OpenID        string         `gorm:"size:128" json:"openID"`
+	UserConfModel *UserConfModel `gorm:"foreignKey:UserID" json:"userConfModel"`
+	Friends       []FriendModel  `gorm:"foreignKey:SendUserID" json:"friends"` // 定义好友关系
 }
-
 type UserDao interface {
 	Insert(ctx context.Context, u UserModel) error
 	FindByEmail(ctx context.Context, email string) (UserModel, error)
 	FindById(ctx context.Context, uid uint) (UserModel, error)
-	UpdateNonZeroFields(ctx context.Context, u UserModel) (UserModel, error)
+	UpdateNonZeroFields(ctx context.Context, u UserModel) error
 }
 
 type GormUserDAO struct {
@@ -48,7 +46,7 @@ func NewUserDAO(db *gorm.DB) UserDao {
 	return &GormUserDAO{db: db}
 }
 
-func (dao *GormUserDAO) UpdateNonZeroFields(ctx context.Context, u UserModel) (UserModel, error) {
+func (dao *GormUserDAO) UpdateNonZeroFields(ctx context.Context, u UserModel) error {
 
 	tx := dao.db.WithContext(ctx).Begin()
 	defer func() {
@@ -57,82 +55,26 @@ func (dao *GormUserDAO) UpdateNonZeroFields(ctx context.Context, u UserModel) (U
 		}
 	}()
 
-	//var u UserModel
-	//
-	//user := &UserModel{
-	//	// 设置要更新的用户模型字段值
-	//	Id:       u.Id,
-	//	Email:    u.Email,
-	//	Phone:    u.Phone,
-	//	Nickname: u.Nickname,
-	//	Abstract: u.Abstract,
-	//	Avatar:   u.Avatar,
-	//	IP:       u.IP,
-	//	Addr:     u.Addr,
-	//	Role:     u.Role,
-	//}
-
-	//userConf := &UserConfModel{
-	//	// 设置要更新的用户配置模型字段值
-	//	RecallMessage: u.UserConfModel.RecallMessage,
-	//	FriendOnline:  u.UserConfModel.FriendOnline,
-	//	Sound:         u.UserConfModel.Sound,
-	//	SecureLink:    u.UserConfModel.SecureLink,
-	//	SavePwd:       u.UserConfModel.SavePwd,
-	//	SearchUser:    u.UserConfModel.SearchUser,
-	//	Verification:  u.UserConfModel.Verification,
-	//	Problem1:      u.UserConfModel.Problem1,
-	//	Problem2:      u.UserConfModel.Problem2,
-	//	Problem3:      u.UserConfModel.Problem3,
-	//	Answer1:       u.UserConfModel.Answer1,
-	//	Answer2:       u.UserConfModel.Answer2,
-	//	Answer3:       u.UserConfModel.Answer3,
-	//}
-	//var ucf UserConfModel
-	//
-	//if err := tx.Model(userConf).Where("user_id =?", u.Id).Updates(UserConfModel{}).Error; err != nil {
-	//	tx.Rollback()
-	//	return ucf, err
-	//}
-	//
-	//return user, err
-
-	if err := tx.Model(&UserModel{}).Where("id =?", u.Id).Updates(u).Error; err != nil {
+	if err := tx.Model(&UserModel{}).Where("id =?", u.ID).Updates(u).Error; err != nil {
 		tx.Rollback()
-		return UserModel{}, err
-	}
-
-	// 获取更新后的用户数据
-	updatedUser := UserModel{}
-	if err := tx.Where("id =?", u.Id).First(&updatedUser).Error; err != nil {
-		tx.Rollback()
-		return UserModel{}, err
+		return err
 	}
 
 	// 更新用户配置表
 	userConf := u.UserConfModel
 	if userConf != nil {
-		if err := tx.Model(&UserConfModel{}).Where("user_id =?", u.Id).Updates(userConf).Error; err != nil {
+		if err := tx.Model(&UserConfModel{}).Where("user_id =?", u.ID).Updates(userConf).Error; err != nil {
 			tx.Rollback()
-			return UserModel{}, err
+			return err
 		}
 
-		// 获取更新后的用户配置数据
-		updatedUserConf := UserConfModel{}
-		if err := tx.Where("user_id =?", u.Id).First(&updatedUserConf).Error; err != nil {
-			tx.Rollback()
-			return UserModel{}, err
-		}
-
-		// 将更新后的用户配置关联到用户数据
-		updatedUser.UserConfModel = &updatedUserConf
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		return UserModel{}, err
+		return err
 	}
 
-	return updatedUser, nil
+	return nil
 
 }
 

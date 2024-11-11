@@ -18,7 +18,7 @@ type UserService interface {
 	SignUp(ctx context.Context, user user_domain.User) error
 	Login(ctx context.Context, email string, password string) (user_domain.User, error)
 	Info(ctx context.Context, uid uint) (user_domain.User, error)
-	Edit(ctx context.Context, user user_domain.User) (user_domain.User, error)
+	Edit(ctx context.Context, user user_domain.User) error
 }
 
 type userService struct {
@@ -33,7 +33,7 @@ func NewUserService(repo user_repo.UserRepository, l logger.Logger) UserService 
 	}
 }
 
-func (svc *userService) Edit(ctx context.Context, user user_domain.User) (user_domain.User, error) {
+func (svc *userService) Edit(ctx context.Context, user user_domain.User) error {
 	return svc.repo.UpdateInfo(ctx, user)
 }
 

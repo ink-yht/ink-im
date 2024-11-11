@@ -8,6 +8,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"ink-im-server/internal/repository/cache/user_cache"
 	"ink-im-server/internal/repository/dao/user_dao"
 	"ink-im-server/internal/repository/user_repo"
 	"ink-im-server/internal/service/user_service"
@@ -26,9 +27,16 @@ func InitWebServer() *gin.Engine {
 	v := ioc.InitMiddleWares(logger)
 	db := ioc.InitDB(logger)
 	userDao := user_dao.NewUserDAO(db)
-	userRepository := user_repo.NewUserRepository(userDao)
+	cmdable := ioc.InitRedis()
+	userCache := user_cache.NewUserCache(cmdable)
+	userRepository := user_repo.NewUserRepository(userDao, userCache)
 	userService := user_service.NewUserService(userRepository, logger)
 	userHandler := user_web.NewUserHandler(userService, logger)
-	engine := ioc.InitWebServer(v, userHandler)
+	friendDao := user_dao.NewFriendDAO(db)
+	friendCache := user_cache.NewFriendCache(cmdable)
+	friendRepository := user_repo.NewFriendRepository(friendDao, friendCache)
+	friendService := user_service.NewFriendService(friendRepository, logger)
+	friendHandler := user_web.NewFriendHandler(friendService, logger)
+	engine := ioc.InitWebServer(v, userHandler, friendHandler)
 	return engine
 }

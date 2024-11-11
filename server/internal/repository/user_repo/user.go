@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"ink-im-server/internal/domain/user_domain"
+	"ink-im-server/internal/repository/cache/user_cache"
 	"ink-im-server/internal/repository/dao/user_dao"
 	"time"
 )
@@ -17,25 +18,35 @@ type UserRepository interface {
 	Create(ctx context.Context, user user_domain.User) error
 	FindByEmail(ctx context.Context, email string) (user_domain.User, error)
 	FindById(ctx context.Context, uid uint) (user_domain.User, error)
-	UpdateInfo(ctx context.Context, user user_domain.User) (user_domain.User, error)
+	UpdateInfo(ctx context.Context, user user_domain.User) error
 }
 
 type CacheUserRepository struct {
-	dao user_dao.UserDao
+	dao   user_dao.UserDao
+	cache user_cache.UserCache
 }
 
-func NewUserRepository(dao user_dao.UserDao) UserRepository {
+func NewUserRepository(dao user_dao.UserDao, cache user_cache.UserCache) UserRepository {
 	return &CacheUserRepository{
-		dao: dao,
+		dao:   dao,
+		cache: cache,
 	}
 }
 
-func (repo *CacheUserRepository) UpdateInfo(ctx context.Context, user user_domain.User) (user_domain.User, error) {
-	u, err := repo.dao.UpdateNonZeroFields(ctx, repo.domainToEntity(user))
-	return repo.entityToDomain(u), err
+func (repo *CacheUserRepository) UpdateInfo(ctx context.Context, user user_domain.User) error {
+	return repo.dao.UpdateNonZeroFields(ctx, repo.domainToEntity(user))
 }
 
 func (repo *CacheUserRepository) FindById(ctx context.Context, uid uint) (user_domain.User, error) {
+	u, err := repo.cache.Get(ctx, uid)
+	// 缓存里面有数据
+	// 缓存里面没有数据
+	// 缓存出错了，不知道有没有数据
+	if err == nil {
+		// 必然有数据
+		return u, err
+	}
+
 	user, err := repo.dao.FindById(ctx, uid)
 	if err != nil {
 		return user_domain.User{}, err
@@ -57,7 +68,7 @@ func (repo *CacheUserRepository) Create(ctx context.Context, user user_domain.Us
 
 func (repo *CacheUserRepository) domainToEntity(u user_domain.User) user_dao.UserModel {
 	data := user_dao.UserModel{
-		Id:         u.Id,
+		ID:         u.Id,
 		CreateTime: u.CreateTime.UnixMilli(),
 		Email: sql.NullString{
 			String: u.Email,
@@ -102,7 +113,7 @@ func (repo *CacheUserRepository) domainToEntity(u user_domain.User) user_dao.Use
 
 func (repo *CacheUserRepository) entityToDomain(u user_dao.UserModel) user_domain.User {
 	data := user_domain.User{
-		Id:         u.Id,
+		Id:         u.ID,
 		CreateTime: time.UnixMilli(u.CreateTime),
 		Email:      u.Email.String,
 		Phone:      u.Phone.String,
@@ -117,7 +128,7 @@ func (repo *CacheUserRepository) entityToDomain(u user_dao.UserModel) user_domai
 		UserConf: &user_domain.UserConf{
 			Id:            u.UserConfModel.Id,
 			CreateTime:    time.UnixMilli(u.UserConfModel.CreateTime),
-			UserID:        u.Id,
+			UserID:        u.ID,
 			RecallMessage: u.UserConfModel.RecallMessage,
 			FriendOnline:  u.UserConfModel.FriendOnline,
 			Sound:         u.UserConfModel.Sound,

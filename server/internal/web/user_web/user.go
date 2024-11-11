@@ -19,11 +19,11 @@ const (
 	passwordRegexPattern = "^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[._~!@#$^&*])[A-Za-z0-9._~!@#$^&*]{8,20}$"
 )
 
-// 确保 UserHandler 上实现了 handler 接口
-var _ Handler = &UserHandler{}
-
-// 这个更优雅
-var _ Handler = (*UserHandler)(nil)
+//// 确保 UserHandler 上实现了 handler 接口
+//var _ Handler = &UserHandler{}
+//
+//// 这个更优雅
+//var _ Handler = (*UserHandler)(nil)
 
 type UserHandler struct {
 	emailRexExp *regexp.Regexp
@@ -326,11 +326,13 @@ func (u *UserHandler) Edit(ctx *gin.Context) {
 
 	if req.Nickname == "" {
 		ctx.JSON(http.StatusOK, web.Result{Code: 1, Msg: "昵称不能为空"})
+		u.l.Warn("昵称不能为空")
 		return
 	}
 
 	if len(req.Abstract) > 128 {
 		ctx.JSON(http.StatusOK, web.Result{Code: 1, Msg: "简介过长"})
+		u.l.Warn("简介过长")
 		return
 	}
 
@@ -360,7 +362,7 @@ func (u *UserHandler) Edit(ctx *gin.Context) {
 		},
 	}
 	fmt.Println("data:", data)
-	user, err := u.svc.Edit(ctx, data)
+	err := u.svc.Edit(ctx, data)
 	if err != nil {
 		u.l.Error("修改个人信息失败", logger.String("email", req.Email))
 		ctx.JSON(http.StatusOK, web.Result{
@@ -373,9 +375,9 @@ func (u *UserHandler) Edit(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, web.Result{
 		Code: 0,
 		Msg:  "个人信息修改成功",
-		Data: user,
+		Data: nil,
 	})
-
+	u.l.Info("修改个人信息失败", logger.String("email", req.Email))
 }
 
 func (u *UserHandler) Info(ctx *gin.Context) {
@@ -385,7 +387,12 @@ func (u *UserHandler) Info(ctx *gin.Context) {
 	if err != nil {
 		// 按照道理来说，这边 id 对应的数据肯定存在，所以要是没找到，
 		// 那就说明是系统出了问题。
-		ctx.String(http.StatusOK, "系统错误")
+		ctx.JSON(http.StatusOK, web.Result{
+			Code: 2,
+			Msg:  "系统错误",
+			Data: nil,
+		})
+		u.l.Error("找不到 id")
 		return
 	}
 
@@ -417,6 +424,7 @@ func (u *UserHandler) Info(ctx *gin.Context) {
 		Msg:  "个人信息获取成功",
 		Data: data,
 	})
+	u.l.Info("个人信息获取成功", logger.String("email", user.Email))
 }
 
 func (u *UserHandler) setJWT(ctx *gin.Context, uid uint) error {
