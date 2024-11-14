@@ -19,6 +19,18 @@ export default defineConfig(({ mode }) => {
     server: {
       host: "0.0.0.0",
       port: 80,
+      proxy: {
+        "/api": {
+          target: serverUrl,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api/, ""), // 添加这行，如果后端接口不需要 /api 前缀
+        },
+        "/uploads": {
+          target: serverUrl,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api/, ""), // 添加这行，如果后端接口不需要 /api 前缀
+        },
+      },
     },
   };
 });

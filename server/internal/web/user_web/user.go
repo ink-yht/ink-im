@@ -7,6 +7,8 @@ import (
 	"ink-im-server/internal/web"
 	"ink-im-server/pkg/logger"
 	"net/http"
+	"os"
+	"path"
 	"time"
 
 	regexp "github.com/dlclark/regexp2"
@@ -42,6 +44,7 @@ func NewUserHandler(svc user_service.UserService, l logger.Logger) *UserHandler 
 }
 
 func (u *UserHandler) UserRegisterRouters(server *gin.Engine) {
+	//server.GET("/uploads/:imageType/:imageName", u.AvatarShow)
 	ug := server.Group("/users")
 	ug.POST("/signup", u.Signup)
 	ug.POST("/login", u.Login)
@@ -383,6 +386,7 @@ func (u *UserHandler) Edit(ctx *gin.Context) {
 func (u *UserHandler) Info(ctx *gin.Context) {
 
 	userClaims := ctx.MustGet("claims").(UserClaims)
+
 	user, err := u.svc.Info(ctx, userClaims.Uid)
 	if err != nil {
 		// 按照道理来说，这边 id 对应的数据肯定存在，所以要是没找到，
@@ -418,6 +422,27 @@ func (u *UserHandler) Info(ctx *gin.Context) {
 		Answer3:       user.UserConf.Answer3,
 		Online:        user.UserConf.Online,
 	}
+	fmt.Println("avatar:", data.Avatar)
+
+	//// 使用 strings.Split 函数按 '/' 分割字符串
+	//parts := strings.Split(data.Avatar, "/")
+	//
+	//// 输出所有部分，以便查看
+	//fmt.Println("All parts:", parts)
+	//
+	//// 获取第二部分和第三部分
+	//// 注意：索引从0开始，所以第二部分是索引1，第三部分是索引2
+	//if len(parts) > 3 {
+	//	secondPart := parts[2]
+	//	thirdPart := parts[3]
+	//	show, err := u.AvatarShow(ctx, secondPart, thirdPart)
+	//	if err != nil {
+	//		return
+	//	}
+	//	data.Avatar = show
+	//} else {
+	//	fmt.Println("The address does not have enough parts.")
+	//}
 
 	ctx.JSON(http.StatusOK, web.Result{
 		Code: 0,
@@ -447,6 +472,28 @@ func (u *UserHandler) setJWT(ctx *gin.Context, uid uint) error {
 
 	ctx.Header("x-jwt-token", tokenStr)
 	return nil
+}
+
+func (u *UserHandler) AvatarShow(ctx *gin.Context, imageType, imageName string) (avatar string, err error) {
+	filePath := path.Join("uploads", imageType, imageName)
+	fmt.Println(filePath)
+	bateDate, err := os.ReadFile(filePath)
+	if err != nil {
+		ctx.JSON(http.StatusOK, web.Result{
+			Code: 1,
+			Msg:  "图片获取失败",
+			Data: nil,
+		})
+		u.l.Error("图片获取失败", logger.String("image", err.Error()))
+		return
+	}
+	// 直接写入图片数据
+	// 设置Content-Type为image/jpeg
+	ctx.Header("Content-Type", "image/jpeg")
+
+	// 直接返回图片数据
+	ctx.Data(http.StatusOK, "image/jpeg", bateDate)
+	return
 }
 
 type UserClaims struct {

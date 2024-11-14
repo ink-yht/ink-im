@@ -8,10 +8,15 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"ink-im-server/internal/repository/cache/files_cache"
 	"ink-im-server/internal/repository/cache/user_cache"
+	"ink-im-server/internal/repository/dao/files_dao"
 	"ink-im-server/internal/repository/dao/user_dao"
+	"ink-im-server/internal/repository/files_repo"
 	"ink-im-server/internal/repository/user_repo"
+	"ink-im-server/internal/service/files_service"
 	"ink-im-server/internal/service/user_service"
+	"ink-im-server/internal/web/files_web"
 	"ink-im-server/internal/web/user_web"
 	"ink-im-server/ioc"
 )
@@ -37,6 +42,11 @@ func InitWebServer() *gin.Engine {
 	friendRepository := user_repo.NewFriendRepository(friendDao, friendCache)
 	friendService := user_service.NewFriendService(friendRepository, logger)
 	friendHandler := user_web.NewFriendHandler(friendService, logger)
-	engine := ioc.InitWebServer(v, userHandler, friendHandler)
+	avatarDao := files_dao.NewAvatarDAO(db)
+	avatarCache := files_cache.NewAvatarCache(cmdable)
+	avatarRepository := files_repo.NewAvatarRepository(avatarDao, avatarCache)
+	avatarService := files_service.NewAvatarService(avatarRepository, logger)
+	avatarHandler := files_web.NewAvatarHandler(avatarService, logger)
+	engine := ioc.InitWebServer(v, userHandler, friendHandler, avatarHandler)
 	return engine
 }

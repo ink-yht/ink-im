@@ -3,9 +3,11 @@ package ioc
 import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"ink-im-server/internal/web/files_web"
 	middlelware "ink-im-server/internal/web/middleware"
 	"ink-im-server/internal/web/user_web"
 	"ink-im-server/pkg/logger"
+	"net/http"
 	"strings"
 	"time"
 )
@@ -14,12 +16,15 @@ func InitWebServer(mdls []gin.HandlerFunc,
 
 	userHdl *user_web.UserHandler,
 	friendHdl *user_web.FriendHandler,
+	imageHdl *files_web.AvatarHandler,
 ) *gin.Engine {
 
 	server := gin.Default()
+	server.StaticFS("uploads", http.Dir("uploads"))
 	server.Use(mdls...)
 	userHdl.UserRegisterRouters(server)
 	friendHdl.FriendRegisterRouters(server)
+	imageHdl.AvatarRegisterRouters(server)
 	return server
 }
 

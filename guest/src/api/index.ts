@@ -3,7 +3,7 @@ import { ElMessage } from "element-plus";
 import { useStore } from "@/stores";
 
 export const useAxios = axios.create({
-  baseURL: "http://127.0.0.1:8081",
+  baseURL: "/api",
 });
 
 export interface baseResponse<T> {
@@ -20,7 +20,8 @@ useAxios.interceptors.request.use((config) => {
   const store = useStore();
   const token = store.userInfo.token;
   console.log(token);
-  config.headers.setAuthorization("Bearer " + token, true);
+  // config.headers["Content-Type"] = "multipart/form-data";
+  config.headers["Authorization"] = "Bearer " + token;
   return config;
 });
 useAxios.interceptors.response.use(
