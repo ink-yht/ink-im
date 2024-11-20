@@ -19,7 +19,6 @@ export interface listDataType<T> {
 useAxios.interceptors.request.use((config) => {
   const store = useStore();
   const token = store.userInfo.token;
-  console.log(token);
   // config.headers["Content-Type"] = "multipart/form-data";
   config.headers["Authorization"] = "Bearer " + token;
   return config;

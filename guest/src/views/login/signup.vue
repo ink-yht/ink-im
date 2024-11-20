@@ -4,6 +4,7 @@ import { Hide, View, Message, Lock } from "@element-plus/icons-vue";
 import Qq_color from "@/components/im_login/qq_color.vue";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
+import {SignupApi} from "@/api/user";
 
 const router = useRouter();
 
@@ -33,9 +34,18 @@ const togglePasswordVisibility = () => {
   form.showPassword = !form.showPassword;
 };
 
-const handleSignup = () => {
+const handleSignup = async () => {
   if (form.email && form.password && form.confirmPassword) {
-    router.push("/login");
+
+    // 开始注册
+    const res = await SignupApi(form)
+    if(res.code){
+      ElMessage.warning(res.msg)
+      return
+    }
+
+    ElMessage.success("注册成功");
+    await router.push("/login");
   } else {
     ElMessage.error("please input it to completion");
   }

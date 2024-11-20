@@ -1,9 +1,24 @@
 import { type baseResponse, useAxios } from "@/api/index";
 
+// SignupApi 用户注册
+export interface SignupRequest {
+  email: string;
+  password: string;
+  confirmPassword : string;
+  showPassword: boolean;
+}
+
+export function SignupApi(data: SignupRequest): Promise<baseResponse<string>> {
+  return useAxios.post("users/signup", data);
+}
+
+
 // LoginApi 用户登录
 export interface LoginRequest {
   email: string;
   password: string;
+  rememberMe: boolean;
+  showPassword: boolean;
 }
 
 export function LoginApi(data: LoginRequest): Promise<baseResponse<string>> {

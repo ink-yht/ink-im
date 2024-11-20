@@ -28,7 +28,6 @@ export const useStore = defineStore("counter", {
     async setToken(token: string) {
       try {
         const payload = parseToken(token);
-        console.log(payload);
         this.userInfo.token = token;
         this.userInfo.exp = payload.exp;
         this.userInfo.Uid = payload.Uid;
@@ -70,7 +69,6 @@ export const useStore = defineStore("counter", {
   getters: {
     isLogin(): boolean {
       try {
-        console.log(this.userInfo.token);
         return this.userInfo.token != "";
       } catch (e) {
         console.log(e);

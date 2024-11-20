@@ -93,7 +93,7 @@ func (dao *GormUserDAO) FindByEmail(ctx context.Context, email string) (UserMode
 func (dao *GormUserDAO) Insert(ctx context.Context, u UserModel) error {
 	// 写入数据库
 
-	avatarPath := "/uploads/avatar/logo.jpg" // 默认头像路径
+	avatarPath := "/uploads/avatar/logo.png" // 默认头像路径
 
 	// 毫秒
 	now := time.Now().UnixMilli()

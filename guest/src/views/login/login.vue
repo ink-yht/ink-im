@@ -108,7 +108,6 @@ const handleLogin = async () => {
 
     // 先拿 redirect_url,如果有，就跳转到这里
     const redirectUrl = router.currentRoute.value.query.redirect_url;
-    console.log("redirectUrl", redirectUrl);
     if (redirectUrl) {
       await router.push({
         path: redirectUrl as string,

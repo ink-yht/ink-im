@@ -73,8 +73,6 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-  console.log("to:", to);
-  console.log("from:", from);
 
   if (to.meta.isLogin === true) {
     // 查询有没有登录
@@ -88,7 +86,6 @@ router.beforeEach((to, from, next) => {
           redirect_url: redirectPath,
         },
       });
-      console.log("from.path", from.path);
       ElMessage.warning("请登录");
       return;
     }
