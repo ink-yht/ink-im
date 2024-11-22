@@ -3,7 +3,7 @@
 </script>
 
 <template>
-<div>系统消息</div>
+    <div>系统消息</div>
 </template>
 
 <style scoped>

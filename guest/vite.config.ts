@@ -7,8 +7,13 @@ export default defineConfig(({ mode }) => {
   let env: Record<keyof ImportMetaEnv, string> = loadEnv(mode, process.cwd());
 
   const serverUrl = env.VITE_SERVER_URL;
-  console.log(serverUrl);
+  console.log("serverUrl",serverUrl);
   return {
+    css: {
+      preprocessorOptions: {
+        scss: { api: 'modern-compiler' },
+      }
+    },
     plugins: [vue()],
     envDir: "./",
     resolve: {

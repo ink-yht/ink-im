@@ -100,6 +100,10 @@ func (dao *GormUserDAO) Insert(ctx context.Context, u UserModel) error {
 	u.CreateTime = now
 	u.UpdateTime = now
 	u.Avatar = avatarPath
+	//if u.UserConfModel == nil {
+	//	u.UserConfModel = &UserConfModel{}
+	//}
+	u.UserConfModel.CreateTime = now
 
 	err := dao.db.WithContext(ctx).Preload("UserConfModel").Create(&u).Error
 

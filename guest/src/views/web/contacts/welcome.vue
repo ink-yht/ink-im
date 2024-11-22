@@ -3,7 +3,7 @@
 </script>
 
 <template>
-<div>欢迎</div>
+    <div>欢迎</div>
 </template>
 
 <style scoped>

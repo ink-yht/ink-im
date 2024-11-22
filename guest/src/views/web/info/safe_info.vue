@@ -1,11 +1,9 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 
 </script>
-
 <template>
-    <div>会话列表</div>
+    <div>安全设置</div>
 </template>
-
 <style scoped>
 
 </style>

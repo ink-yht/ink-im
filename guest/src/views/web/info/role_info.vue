@@ -3,7 +3,7 @@
 </script>
 
 <template>
-    <div>会话列表</div>
+    <div>权限设置</div>
 </template>
 
 <style scoped>

@@ -56,6 +56,29 @@ const router = createRouter({
           path: "info",
           name: "info",
           component: () => import("@/views/web/info/index.vue"),
+          redirect:"/info/my",
+          children: [
+            {
+              path: "my",
+              name: "my_info",
+              component: () => import("@/views/web/info/my_info.vue"),
+            },
+            {
+              path: "base",
+              name: "base_info",
+              component: () => import("@/views/web/info/base_info.vue"),
+            },
+            {
+              path: "safe",
+              name: "safe_info",
+              component: () => import("@/views/web/info/safe_info.vue"),
+            },
+            {
+              path: "role",
+              name: "role_info",
+              component: () => import("@/views/web/info/role_info.vue"),
+            },
+          ]
         },
 
         // notice
